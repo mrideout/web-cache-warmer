@@ -2,6 +2,8 @@
  
 **web-cache-warmer** is a script for warming website and FTP caches. It will download the URL(s) that you specify using the user agent string(s) that you specify. It can also recursively crawl [sitemaps](http://www.sitemaps.org/), and download the URLs contained within them.
 
+See the [**web-cache-warmer** website](http://webcachewarmer.com/) for more documentation.
+
 ## Installation
 
 1. Verify that you have [Ruby](https://www.ruby-lang.org/) 1.9.3 (released October 2011) or later installed:
@@ -73,8 +75,8 @@
  
 ## History
 
-[Matt Rideout](https://www.mattrideout.com/) wrote and released *web-cache-warmer** in January 2015. 
+[Matt Rideout](https://www.mattrideout.com/) wrote and released **web-cache-warmer** in January 2015. 
  
 ## License
  
-*web-cache-warmer** is open source software licensed using the 2-class BSD license. See the LICENSE file for details.
+**web-cache-warmer** is open source software licensed using the 2-class BSD license. See the LICENSE file for details.
