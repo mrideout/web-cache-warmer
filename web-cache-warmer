@@ -1,0 +1,194 @@
+#!/usr/bin/env ruby
+
+# rexml is used for XML parsing
+# http://www.germane-software.com/software/rexml/docs/tutorial.html
+require 'rexml/document'
+include REXML
+
+# open-uri is used for retrieving data from URLs
+# http://www.ruby-doc.org/stdlib-2.2.0/libdoc/net/http/rdoc/Net/HTTP/Post.html
+require 'open-uri'
+
+# OptionParser is used for command line options
+# http://www.ruby-doc.org/stdlib-2.2.0/libdoc/optparse/rdoc/OptionParser.html
+require 'optparse'
+
+def validate_options(quiet, sitemaps, urls, default_user_agents, user_agents, verbose, wget_args)
+  # At least one sitemap or URL must be specified to continue
+  if (urls.empty? && sitemaps.empty?)
+    puts "ERROR: You must specify at least one URL or sitemap. Run '#{$PROGRAM_NAME} --help' for more details."
+    exit
+  end
+
+  # Print a warning if both a user agent, and wget arguments are specified
+  if (user_agents != default_user_agents && !wget_args.empty?)
+    print "WARNING: You've specified both --user-agent and --wget-args. "
+    puts "--wget-args will take precedence.\n\n"
+  end
+
+  if (verbose && quiet)
+    puts "ERROR: the --verbose and --quiet options are mutually exclusive."
+    exit
+  end
+end
+
+def crawl_sitemaps(sitemaps, urls, verbosity)
+  sitemaps.each do|sitemap|
+    # Open the sitemap
+    doc = Document.new open(sitemap) { |f| f.read }
+
+    if (verbosity > 0)
+      puts "Crawling #{sitemap}"
+    end
+
+    # Push each sitemap that's listed into the sitemaps array IF it's not already present
+    XPath.each( doc, "sitemapindex/sitemap/loc") do |element|
+      unless sitemaps.include?(element.text)
+        sitemaps.push(element.text)
+	puts "Added child sitemap #{element.text} to queue" if (verbosity > 1)
+      end
+    end
+
+    # Push each URL that's listed in the urls array
+    XPath.each( doc, "urlset/url/loc") { |element| urls.push(element.text) }
+  end
+
+  if (verbosity > 1)
+    puts "\nSitemap(s) that were crawled:"
+    sitemaps.each { |sitemap| puts sitemap }
+  end
+
+  puts if (verbosity > 0)
+  urls.uniq!
+
+  if (urls.count == 0)
+    puts "ERROR: No URLs were specified, or found in sitemaps exiting."
+    exit
+  end
+end
+
+def warm_urls(urls, wget_args, user_agents, verbosity)
+  if (verbosity > 1)
+    puts "URL(s) to warm:"
+    urls.each { |url| puts url }
+    puts
+  end
+
+  # Keep track of whether the user specified what wget arguments to use
+  if wget_args.empty?
+    wget_custom = false 
+  else
+    wget_custom = true
+  end
+
+  # Iterate over each user agent
+  i = 0
+  user_agents.each do |user_agent|
+    puts if (i > 0) # add spacing between user agents
+    i = i + 1
+    puts "Warming URL(s) with the '#{user_agent}' user agent:" if (verbosity > 0)
+
+    # Escape single quotes in the user agent name
+    user_agent.gsub!("'", "''")
+
+    # Construct wget arguments
+    unless wget_custom
+      case verbosity
+        when 0
+          wget_extra_args = "--quiet"
+        when 1
+          wget_extra_args = "--no-verbose"
+        when 2
+          wget_extra_args = "--verbose"
+        else
+          puts "ERROR: An invalid verbosity level was specified."
+          exit
+      end
+      wget_args = "--page-requisite --no-cache --user-agent='#{user_agent}' --output-document=/dev/null #{wget_extra_args}"
+    end
+
+    # Iterate over each URL
+    urls.each do |url|
+      puts url if (verbosity == 1)
+
+      # Escape single quotes in the url
+      url.gsub!("'", "''")
+
+     wget_command="wget #{wget_args} '#{url}' 2>&1"
+     puts wget_command if (verbosity == 2)
+     wget_output=`#{wget_command}`
+
+      # If verbosity is 1 AND custom wget arguments were not specified, filter
+      #  wget's output 
+      if (wget_custom || verbosity == 2)
+        puts wget_output
+      elsif (verbosity == 1)
+        wget_output.split("\n").each do |l|
+          puts l if l.include? "wget: "
+        end
+      end
+    end
+
+  end
+end
+
+# Initialize variables
+verbose = false
+quiet = false
+verbosity = 1
+sitemaps = []
+urls = []
+wget_args = ''
+user_agents = default_user_agents = ['webcachewarmer.com']
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: #{$PROGRAM_NAME} [options]"
+
+  opts.on("-h", "--help", "Prints this help message") do 
+    puts opts
+    exit
+  end
+
+  opts.on("-q", "--quiet", "Suppress non-error messages") do
+    verbosity = 0
+    quiet = true
+  end
+
+  opts.on("-s", "--sitemap URL", "Space delimited list of XML Sitemap URL(s)") do |s|
+    sitemaps = s.split(" ")
+  end
+
+  opts.on("-u", "--url URL", "Space delimited list of URL(s) to download") do |u|
+    urls = u.split(" ")
+  end
+
+  opts.on("-U", "--user-agent AGENT", "Bar (|) delimited list of user agent(s) to use") do |u|
+    user_agents = u.split("|")
+  end
+
+  opts.on("-v", "--verbose", "Print verbose output") do
+    verbosity = 2
+    verbose = true
+  end
+
+  opts.on("-V", "--version", "Print version number") do
+    puts "0.1"
+    exit
+  end
+
+  opts.on("-w", "--wget-args ARGS", "Arguments to pass to wget. Takes precedence over --user-agent") do |w|
+    wget_args = w
+  end
+end.parse!
+
+# Validate the options that were selected
+validate_options(quiet, sitemaps, urls, default_user_agents, user_agents, verbose, wget_args)
+
+# Crawl sitemap(s)
+unless (sitemaps.empty?)
+  crawl_sitemaps(sitemaps, urls, verbosity)
+end
+
+# Warm the URLs
+warm_urls(urls, wget_args, user_agents, verbosity)
+
