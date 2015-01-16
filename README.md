@@ -16,11 +16,19 @@ See the [**web-cache-warmer** website](http://webcachewarmer.com/) for more docu
 
         wget --version
 
-3. Save the **web-cache-warmer** file.
+3. Download and extract the tarball:
+
+        wget https://github.com/mrideout/web-cache-warmer/archive/v0.1.tar.gz
+        tar -xzf v0.1.tar.gz
+        cd web-cache-warmer-0.1
 
 4. Make **web-cache-warmer** executable:
 
         chmod 755 web-cache-warmer
+
+5. Optionally, move **web-cache-warmer** into a directory that's in your PATH. For example:
+
+        sudo mv web-cache-warmer /usr/local/bin/
  
 ## Usage
 
