@@ -87,4 +87,4 @@ See the [**web-cache-warmer** website](http://webcachewarmer.com/) for more docu
  
 ## License
  
-**web-cache-warmer** is open source software licensed using the 2-class BSD license. See the LICENSE file for details.
+**web-cache-warmer** is open source software licensed using the 2-clause BSD license. See the LICENSE file for details.
