@@ -34,12 +34,12 @@ end
 
 def crawl_sitemaps(sitemaps, urls, verbosity)
   sitemaps.each do|sitemap|
-    # Open the sitemap
-    doc = Document.new open(sitemap) { |f| f.read }
-
     if (verbosity > 0)
       puts "Crawling #{sitemap}"
     end
+
+    # Open the sitemap
+    doc = Document.new open(sitemap) { |f| f.read }
 
     # Push each sitemap that's listed into the sitemaps array IF it's not already present
     XPath.each( doc, "sitemapindex/sitemap/loc") do |element|
