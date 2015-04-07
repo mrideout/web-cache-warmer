@@ -18,8 +18,8 @@ See the [**web-cache-warmer** website](http://webcachewarmer.com/) for more docu
 
 3. Download and extract the tarball:
 
-        wget https://github.com/mrideout/web-cache-warmer/archive/v0.1.tar.gz
-        tar -xzf v0.1.tar.gz
+        wget https://github.com/mrideout/web-cache-warmer/archive/v0.1.tar.gz -O web-cache-warmer-0.1.tar.gz
+        tar -xzf web-cache-warmer-0.1.tar.gz
         cd web-cache-warmer-0.1
 
 4. Make **web-cache-warmer** executable:
